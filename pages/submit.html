@@ -6,6 +6,27 @@
   <title>Gửi Phản Hồi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../shared/style.css">
+  <style>
+    /* Star widget */
+    .stars { display: flex; gap: 6px; }
+    .stars input[type="radio"] { display: none; }
+    .stars label {
+      font-size: 2rem;
+      color: #d1d5db;
+      cursor: pointer;
+      transition: color .15s;
+      line-height: 1;
+    }
+    /* fill stars up to the checked one */
+    .stars input[type="radio"]:checked ~ label { color: #d1d5db; }
+    .stars label:has(~ input[type="radio"]:checked),
+    .stars input[type="radio"]:checked + label { color: #f59e0b; }
+    /* hover preview */
+    .stars:hover label { color: #d1d5db; }
+    .stars label:hover,
+    .stars label:hover ~ label { color: #f59e0b !important; }
+    .stars label:hover ~ label { color: #d1d5db !important; }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -17,12 +38,141 @@
     </div>
   </header>
 
-  <!-- Page content -->
-  <main class="max-w-4xl mx-auto px-4 py-10">
-    <h1 class="text-2xl font-bold text-gray-800">Gửi Phản Hồi</h1>
-    <p class="mt-2 text-gray-500">Nội dung trang sẽ được thêm vào đây.</p>
+  <main class="max-w-xl mx-auto px-4 py-10">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Gửi Phản Hồi</h1>
+
+    <!-- Success banner (hidden by default) -->
+    <div id="success-msg" class="hidden mb-6 rounded-lg bg-green-50 border border-green-300 px-4 py-3 text-green-800 font-medium">
+      Cảm ơn bạn đã gửi phản hồi! ✓
+    </div>
+
+    <form id="feedback-form" novalidate class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
+
+      <!-- Name (optional) -->
+      <div>
+        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+          Họ tên <span class="text-gray-400 font-normal">(không bắt buộc)</span>
+        </label>
+        <input id="name" type="text" placeholder="Nguyễn Văn A"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+
+      <!-- Location -->
+      <div>
+        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Khu vực</label>
+        <select id="location"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="District 1">Quận 1</option>
+          <option value="District 3">Quận 3</option>
+          <option value="Thao Dien">Thảo Điền</option>
+        </select>
+      </div>
+
+      <!-- Rating -->
+      <div>
+        <span class="block text-sm font-medium text-gray-700 mb-2">
+          Đánh giá <span id="rating-err" class="hidden text-red-500 text-xs ml-1">— vui lòng chọn</span>
+        </span>
+        <!-- Stars rendered RTL so CSS sibling trick works left-to-right visually -->
+        <div class="stars" id="star-widget" aria-label="Đánh giá từ 1 đến 5 sao">
+          <input type="radio" name="rating" id="r5" value="5"><label for="r5" title="5 sao">★</label>
+          <input type="radio" name="rating" id="r4" value="4"><label for="r4" title="4 sao">★</label>
+          <input type="radio" name="rating" id="r3" value="3"><label for="r3" title="3 sao">★</label>
+          <input type="radio" name="rating" id="r2" value="2"><label for="r2" title="2 sao">★</label>
+          <input type="radio" name="rating" id="r1" value="1"><label for="r1" title="1 sao">★</label>
+        </div>
+      </div>
+
+      <!-- Comment (required) -->
+      <div>
+        <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">
+          Nhận xét <span class="text-red-500">*</span>
+          <span id="comment-err" class="hidden text-red-500 text-xs ml-1">— không được để trống</span>
+        </label>
+        <textarea id="comment" rows="4" placeholder="Chia sẻ trải nghiệm của bạn…"
+          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"></textarea>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors">
+        Gửi phản hồi
+      </button>
+
+    </form>
   </main>
 
   <script src="../shared/nav.js"></script>
+  <script>
+    const form = document.getElementById('feedback-form');
+    const successMsg = document.getElementById('success-msg');
+
+    // Fix star widget: CSS sibling trick needs reverse DOM order; reorder so 1 is first visually.
+    // We use flex-row-reverse on the container instead — simpler.
+    document.getElementById('star-widget').style.flexDirection = 'row-reverse';
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const ratingEl = form.querySelector('input[name="rating"]:checked');
+      const commentEl = document.getElementById('comment');
+      let valid = true;
+
+      // Validate rating
+      const ratingErr = document.getElementById('rating-err');
+      if (!ratingEl) {
+        ratingErr.classList.remove('hidden');
+        valid = false;
+      } else {
+        ratingErr.classList.add('hidden');
+      }
+
+      // Validate comment
+      const commentErr = document.getElementById('comment-err');
+      if (!commentEl.value.trim()) {
+        commentErr.classList.remove('hidden');
+        commentEl.classList.add('border-red-400');
+        valid = false;
+      } else {
+        commentErr.classList.add('hidden');
+        commentEl.classList.remove('border-red-400');
+      }
+
+      if (!valid) return;
+
+      // Build entry
+      const entry = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        name: document.getElementById('name').value.trim(),
+        location: document.getElementById('location').value,
+        rating: parseInt(ratingEl.value, 10),
+        comment: commentEl.value.trim(),
+      };
+
+      // Append to localStorage
+      const existing = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
+      existing.push(entry);
+      localStorage.setItem('feedbackEntries', JSON.stringify(existing));
+
+      // Success UI
+      successMsg.classList.remove('hidden');
+      form.reset();
+      successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      // Hide success after 4 s
+      setTimeout(() => successMsg.classList.add('hidden'), 4000);
+    });
+
+    // Live clear errors on interaction
+    document.querySelectorAll('input[name="rating"]').forEach(r =>
+      r.addEventListener('change', () =>
+        document.getElementById('rating-err').classList.add('hidden')));
+    document.getElementById('comment').addEventListener('input', function () {
+      if (this.value.trim()) {
+        document.getElementById('comment-err').classList.add('hidden');
+        this.classList.remove('border-red-400');
+      }
+    });
+  </script>
 </body>
 </html>
