@@ -20,6 +20,52 @@
   <main class="max-w-6xl mx-auto px-4 py-10">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Xem Phản Hồi (Admin)</h1>
 
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+      <div class="flex flex-wrap gap-4 items-end">
+
+        <div class="flex flex-col gap-1">
+          <label for="f-location" class="text-xs font-medium text-gray-500 uppercase tracking-wide">Khu vực</label>
+          <select id="f-location" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">Tất cả khu vực</option>
+            <option value="District 1">Quận 1</option>
+            <option value="District 3">Quận 3</option>
+            <option value="Thao Dien">Thảo Điền</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="f-rating" class="text-xs font-medium text-gray-500 uppercase tracking-wide">Đánh giá tối thiểu</label>
+          <select id="f-rating" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="1">★ 1 trở lên</option>
+            <option value="2">★★ 2 trở lên</option>
+            <option value="3">★★★ 3 trở lên</option>
+            <option value="4">★★★★ 4 trở lên</option>
+            <option value="5">★★★★★ 5 sao</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="f-from" class="text-xs font-medium text-gray-500 uppercase tracking-wide">Từ ngày</label>
+          <input type="date" id="f-from" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="f-to" class="text-xs font-medium text-gray-500 uppercase tracking-wide">Đến ngày</label>
+          <input type="date" id="f-to" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        </div>
+
+        <div class="ml-auto self-end flex items-center gap-3">
+          <span id="count-label" class="text-sm text-gray-500"></span>
+          <button id="clear-filters"
+            class="hidden text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2">
+            Xóa bộ lọc
+          </button>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Table container -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div id="table-wrap" class="overflow-x-auto">
@@ -46,28 +92,58 @@
       return 'text-green-600';
     }
 
-    function render() {
-      const entries = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
-      const wrap = document.getElementById('table-wrap');
+    function getFilters() {
+      return {
+        location: document.getElementById('f-location').value,
+        minRating: parseInt(document.getElementById('f-rating').value, 10),
+        from: document.getElementById('f-from').value,   // "YYYY-MM-DD" or ""
+        to: document.getElementById('f-to').value,
+      };
+    }
 
-      if (entries.length === 0) {
-        wrap.innerHTML = `
-          <div class="px-6 py-16 text-center text-gray-400 text-sm">
-            Chưa có phản hồi nào.
-          </div>`;
+    function render() {
+      const all = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
+      const wrap = document.getElementById('table-wrap');
+      const countLabel = document.getElementById('count-label');
+      const f = getFilters();
+
+      if (all.length === 0) {
+        countLabel.textContent = '';
+        wrap.innerHTML = `<div class="px-6 py-16 text-center text-gray-400 text-sm">Chưa có phản hồi nào.</div>`;
         return;
       }
 
-      const rows = [...entries]
+      const filtered = [...all]
         .sort((a, b) => b.id - a.id)
-        .map(e => `
-          <tr class="border-t border-gray-100 hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
-            <td class="px-4 py-3 text-sm text-gray-700">${e.location}</td>
-            <td class="px-4 py-3 text-sm font-medium ${ratingColor(e.rating)} whitespace-nowrap" title="${e.rating}/5">${ratingStars(e.rating)}</td>
-            <td class="px-4 py-3 text-sm text-gray-700">${e.name || '<span class="text-gray-400 italic">Ẩn danh</span>'}</td>
-            <td class="px-4 py-3 text-sm text-gray-700">${e.comment}</td>
-          </tr>`).join('');
+        .filter(e => {
+          if (f.location && e.location !== f.location) return false;
+          if (e.rating < f.minRating) return false;
+          if (f.from) {
+            const entryDate = e.timestamp.slice(0, 10); // "YYYY-MM-DD"
+            if (entryDate < f.from) return false;
+          }
+          if (f.to) {
+            const entryDate = e.timestamp.slice(0, 10);
+            if (entryDate > f.to) return false;
+          }
+          return true;
+        });
+
+      countLabel.textContent = `Hiển thị ${filtered.length} / ${all.length} phản hồi`;
+
+      if (filtered.length === 0) {
+        wrap.innerHTML = `<div class="px-6 py-16 text-center text-gray-400 text-sm">Không có phản hồi nào khớp với bộ lọc.</div>`;
+        return;
+      }
+
+      const rows = filtered.map(e => `
+        <tr class="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">${formatDate(e.timestamp)}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${e.location}</td>
+          <td class="px-4 py-3 text-sm font-medium ${ratingColor(e.rating)} whitespace-nowrap" title="${e.rating}/5">${ratingStars(e.rating)}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${e.name || '<span class="text-gray-400 italic">Ẩn danh</span>'}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${e.comment}</td>
+        </tr>`).join('');
 
       wrap.innerHTML = `
         <table class="w-full text-left">
@@ -83,6 +159,29 @@
           <tbody>${rows}</tbody>
         </table>`;
     }
+
+    function isFiltered() {
+      return document.getElementById('f-location').value !== '' ||
+             document.getElementById('f-rating').value !== '1' ||
+             document.getElementById('f-from').value !== '' ||
+             document.getElementById('f-to').value !== '';
+    }
+
+    function updateClearBtn() {
+      document.getElementById('clear-filters').classList.toggle('hidden', !isFiltered());
+    }
+
+    ['f-location', 'f-rating', 'f-from', 'f-to'].forEach(id =>
+      document.getElementById(id).addEventListener('change', () => { render(); updateClearBtn(); }));
+
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      document.getElementById('f-location').value = '';
+      document.getElementById('f-rating').value = '1';
+      document.getElementById('f-from').value = '';
+      document.getElementById('f-to').value = '';
+      render();
+      updateClearBtn();
+    });
 
     render();
   </script>

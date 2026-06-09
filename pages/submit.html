@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../shared/style.css">
   <style>
-    /* Star widget */
     .stars { display: flex; gap: 6px; }
     .stars input[type="radio"] { display: none; }
     .stars label {
@@ -17,15 +16,7 @@
       transition: color .15s;
       line-height: 1;
     }
-    /* fill stars up to the checked one */
-    .stars input[type="radio"]:checked ~ label { color: #d1d5db; }
-    .stars label:has(~ input[type="radio"]:checked),
-    .stars input[type="radio"]:checked + label { color: #f59e0b; }
-    /* hover preview */
-    .stars:hover label { color: #d1d5db; }
-    .stars label:hover,
-    .stars label:hover ~ label { color: #f59e0b !important; }
-    .stars label:hover ~ label { color: #d1d5db !important; }
+    .stars label.lit { color: #f59e0b; }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -73,13 +64,12 @@
         <span class="block text-sm font-medium text-gray-700 mb-2">
           Đánh giá <span id="rating-err" class="hidden text-red-500 text-xs ml-1">— vui lòng chọn</span>
         </span>
-        <!-- Stars rendered RTL so CSS sibling trick works left-to-right visually -->
         <div class="stars" id="star-widget" aria-label="Đánh giá từ 1 đến 5 sao">
-          <input type="radio" name="rating" id="r5" value="5"><label for="r5" title="5 sao">★</label>
-          <input type="radio" name="rating" id="r4" value="4"><label for="r4" title="4 sao">★</label>
-          <input type="radio" name="rating" id="r3" value="3"><label for="r3" title="3 sao">★</label>
-          <input type="radio" name="rating" id="r2" value="2"><label for="r2" title="2 sao">★</label>
           <input type="radio" name="rating" id="r1" value="1"><label for="r1" title="1 sao">★</label>
+          <input type="radio" name="rating" id="r2" value="2"><label for="r2" title="2 sao">★</label>
+          <input type="radio" name="rating" id="r3" value="3"><label for="r3" title="3 sao">★</label>
+          <input type="radio" name="rating" id="r4" value="4"><label for="r4" title="4 sao">★</label>
+          <input type="radio" name="rating" id="r5" value="5"><label for="r5" title="5 sao">★</label>
         </div>
       </div>
 
@@ -106,9 +96,23 @@
     const form = document.getElementById('feedback-form');
     const successMsg = document.getElementById('success-msg');
 
-    // Fix star widget: CSS sibling trick needs reverse DOM order; reorder so 1 is first visually.
-    // We use flex-row-reverse on the container instead — simpler.
-    document.getElementById('star-widget').style.flexDirection = 'row-reverse';
+    // Star widget — JS-driven coloring
+    const starLabels = [...document.querySelectorAll('#star-widget label')];
+
+    function setStars(n) {
+      starLabels.forEach((l, i) => l.classList.toggle('lit', i < n));
+    }
+
+    document.getElementById('star-widget').addEventListener('mouseover', e => {
+      const lbl = e.target.closest('label');
+      if (lbl) setStars(starLabels.indexOf(lbl) + 1);
+    });
+    document.getElementById('star-widget').addEventListener('mouseout', () => {
+      const checked = document.querySelector('input[name="rating"]:checked');
+      setStars(checked ? parseInt(checked.value) : 0);
+    });
+    document.querySelectorAll('input[name="rating"]').forEach(r =>
+      r.addEventListener('change', () => setStars(parseInt(r.value))));
 
     form.addEventListener('submit', e => {
       e.preventDefault();
