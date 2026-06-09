@@ -1,0 +1,4 @@
+/* Shared styles — supplements Tailwind CDN */
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
