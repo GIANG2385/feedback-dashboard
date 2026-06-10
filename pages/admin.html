@@ -29,6 +29,8 @@
       } else {
         document.getElementById('admin-email').textContent = user.email;
         document.body.classList.remove('invisible');
+        // Load data only after auth is confirmed so token is available
+        window.__authReady && window.__authReady();
       }
     });
 
@@ -418,8 +420,8 @@
       URL.revokeObjectURL(a.href);
     });
 
-    // ── Init ──
-    loadEntries().then(render);
+    // ── Init — wait for Firebase Auth before fetching ──
+    window.__authReady = () => loadEntries().then(render);
   </script>
 </body>
 </html>
