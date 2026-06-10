@@ -18,8 +18,21 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// GET /api/feedback — return all entries newest first
-app.get('/api/feedback', async (req, res) => {
+async function requireAuth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    req.user = await admin.auth().verifyIdToken(header.slice(7));
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
+
+// GET /api/feedback — return all entries newest first (admin only)
+app.get('/api/feedback', requireAuth, async (req, res) => {
   try {
     const snap = await db.collection(COLLECTION).orderBy('timestamp', 'desc').get();
     const entries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
