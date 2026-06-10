@@ -114,7 +114,7 @@
     document.querySelectorAll('input[name="rating"]').forEach(r =>
       r.addEventListener('change', () => setStars(parseInt(r.value))));
 
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
 
       const ratingEl = form.querySelector('input[name="rating"]:checked');
@@ -143,24 +143,37 @@
 
       if (!valid) return;
 
-      // Build entry
-      const entry = {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        name: document.getElementById('name').value.trim(),
-        location: document.getElementById('location').value,
-        rating: parseInt(ratingEl.value, 10),
-        comment: commentEl.value.trim(),
-      };
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
 
-      // Append to localStorage
-      const existing = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
-      existing.push(entry);
-      localStorage.setItem('feedbackEntries', JSON.stringify(existing));
+      try {
+        const res = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('name').value.trim(),
+            location: document.getElementById('location').value,
+            rating: parseInt(ratingEl.value, 10),
+            comment: commentEl.value.trim(),
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`${res.status}: ${body}`);
+        }
+      } catch (err) {
+        console.error('Submit error:', err);
+        alert('Gửi phản hồi thất bại. Vui lòng thử lại.\n\n' + err.message);
+        submitBtn.disabled = false;
+        return;
+      }
+
+      submitBtn.disabled = false;
 
       // Success UI
       successMsg.classList.remove('hidden');
       form.reset();
+      setStars(0);
       successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
       // Hide success after 4 s

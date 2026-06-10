@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xem Phản Hồi</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="../shared/style.css">
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -19,6 +20,40 @@
 
   <main class="max-w-6xl mx-auto px-4 py-10">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Xem Phản Hồi (Admin)</h1>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="hidden mb-6">
+      <!-- Stat cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div id="stat-total" class="text-3xl font-bold text-blue-600">—</div>
+          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Tổng phản hồi</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div id="stat-avg" class="text-3xl font-bold text-yellow-500">—</div>
+          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Điểm trung bình</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div id="stat-positive" class="text-3xl font-bold text-green-600">—</div>
+          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Tích cực (4-5★)</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div id="stat-negative" class="text-3xl font-bold text-red-500">—</div>
+          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Tiêu cực (1-2★)</div>
+        </div>
+      </div>
+      <!-- Charts -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <h2 class="text-sm font-semibold text-gray-600 mb-3">Phân bố đánh giá</h2>
+          <canvas id="chart-rating" height="160"></canvas>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <h2 class="text-sm font-semibold text-gray-600 mb-3">Phản hồi theo khu vực</h2>
+          <canvas id="chart-location" height="160"></canvas>
+        </div>
+      </div>
+    </div>
 
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -115,22 +150,30 @@
       };
     }
 
+    let allEntries = [];
+
+    async function loadEntries() {
+      try {
+        const res = await fetch('/api/feedback');
+        allEntries = await res.json();
+      } catch {
+        allEntries = [];
+      }
+    }
+
     function getFiltered() {
-      const all = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
       const f = getFilters();
-      return [...all]
-        .sort((a, b) => b.id - a.id)
-        .filter(e => {
-          if (f.location && e.location !== f.location) return false;
-          if (e.rating < f.minRating) return false;
-          if (f.from && e.timestamp.slice(0, 10) < f.from) return false;
-          if (f.to   && e.timestamp.slice(0, 10) > f.to)   return false;
-          return true;
-        });
+      return allEntries.filter(e => {
+        if (f.location && e.location !== f.location) return false;
+        if (e.rating < f.minRating) return false;
+        if (f.from && e.timestamp.slice(0, 10) < f.from) return false;
+        if (f.to   && e.timestamp.slice(0, 10) > f.to)   return false;
+        return true;
+      });
     }
 
     function render() {
-      const all = JSON.parse(localStorage.getItem('feedbackEntries') || '[]');
+      const all = allEntries;
       const wrap = document.getElementById('table-wrap');
       const countLabel = document.getElementById('count-label');
 
@@ -223,7 +266,70 @@
       URL.revokeObjectURL(url);
     });
 
-    render();
+    // --- Dashboard ---
+    let ratingChart = null;
+    let locationChart = null;
+
+    function renderDashboard(filtered) {
+      const dashboard = document.getElementById('dashboard');
+      if (filtered.length === 0) { dashboard.classList.add('hidden'); return; }
+      dashboard.classList.remove('hidden');
+
+      // Stat cards
+      const avg = filtered.reduce((s, e) => s + e.rating, 0) / filtered.length;
+      const positive = filtered.filter(e => e.rating >= 4).length;
+      const negative = filtered.filter(e => e.rating <= 2).length;
+      document.getElementById('stat-total').textContent = filtered.length;
+      document.getElementById('stat-avg').textContent = avg.toFixed(1) + ' ★';
+      document.getElementById('stat-positive').textContent = positive;
+      document.getElementById('stat-negative').textContent = negative;
+
+      // Rating distribution (1–5)
+      const ratingCounts = [1,2,3,4,5].map(r => filtered.filter(e => e.rating === r).length);
+      if (ratingChart) ratingChart.destroy();
+      ratingChart = new Chart(document.getElementById('chart-rating'), {
+        type: 'bar',
+        data: {
+          labels: ['1★','2★','3★','4★','5★'],
+          datasets: [{
+            data: ratingCounts,
+            backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+            borderRadius: 6,
+          }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        },
+      });
+
+      // Feedback by location
+      const locations = ['District 1','District 3','Thao Dien'];
+      const locLabels = ['Quận 1','Quận 3','Thảo Điền'];
+      const locCounts = locations.map(l => filtered.filter(e => e.location === l).length);
+      if (locationChart) locationChart.destroy();
+      locationChart = new Chart(document.getElementById('chart-location'), {
+        type: 'doughnut',
+        data: {
+          labels: locLabels,
+          datasets: [{
+            data: locCounts,
+            backgroundColor: ['#3b82f6','#8b5cf6','#f59e0b'],
+          }],
+        },
+        options: {
+          plugins: { legend: { position: 'bottom' } },
+        },
+      });
+    }
+
+    const _origRender = render;
+    render = function() {
+      _origRender();
+      renderDashboard(getFiltered());
+    };
+
+    loadEntries().then(render);
   </script>
 </body>
 </html>
