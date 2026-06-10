@@ -181,8 +181,19 @@
   <script src="../shared/nav.js"></script>
   <script>
     // ── Helpers ──
-    function formatDate(iso) {
-      const d = new Date(iso);
+    function parseTimestamp(ts) {
+      if (!ts) return new Date(0);
+      // Firestore Timestamp object {seconds, nanoseconds}
+      if (ts && typeof ts === 'object' && ts.seconds != null) {
+        return new Date(ts.seconds * 1000);
+      }
+      return new Date(ts);
+    }
+    function tsToISO(ts) {
+      return parseTimestamp(ts).toISOString();
+    }
+    function formatDate(ts) {
+      const d = parseTimestamp(ts);
       const pad = n => String(n).padStart(2, '0');
       return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
@@ -220,8 +231,8 @@
       return allEntries.filter(e => {
         if (f.location && e.location !== f.location) return false;
         if (e.rating < f.minRating) return false;
-        if (f.from && e.timestamp.slice(0,10) < f.from) return false;
-        if (f.to   && e.timestamp.slice(0,10) > f.to)   return false;
+        if (f.from && tsToISO(e.timestamp).slice(0,10) < f.from) return false;
+        if (f.to   && tsToISO(e.timestamp).slice(0,10) > f.to)   return false;
         return true;
       });
     }
@@ -288,7 +299,7 @@
         dt.setDate(today.getDate() - (13 - i));
         return dt.toISOString().slice(0,10);
       });
-      const dayCounts = days.map(day => d.filter(e => e.timestamp.slice(0,10) === day).length);
+      const dayCounts = days.map(day => d.filter(e => tsToISO(e.timestamp).slice(0,10) === day).length);
       const dayLabels = days.map(day => {
         const [, m, dd] = day.split('-');
         return `${dd}/${m}`;

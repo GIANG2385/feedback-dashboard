@@ -35,7 +35,14 @@ async function requireAuth(req, res, next) {
 app.get('/api/feedback', requireAuth, async (req, res) => {
   try {
     const snap = await db.collection(COLLECTION).orderBy('timestamp', 'desc').limit(100).get();
-    const entries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const entries = snap.docs.map(doc => {
+      const data = doc.data();
+      // Normalise Firestore Timestamp objects → ISO string
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+        data.timestamp = data.timestamp.toDate().toISOString();
+      }
+      return { id: doc.id, ...data };
+    });
     res.json(entries);
   } catch (err) {
     console.error(err);
