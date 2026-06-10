@@ -20,7 +20,6 @@
     });
     const auth = getAuth(app);
 
-    // Expose token getter for the main script (non-module)
     window.__getToken = () =>
       auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve(null);
 
@@ -52,44 +51,75 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-10">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Xem Phản Hồi (Admin)</h1>
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Tổng quan phản hồi</h1>
 
-    <!-- Dashboard -->
-    <div id="dashboard" class="hidden mb-6">
-      <!-- Stat cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-          <div id="stat-total" class="text-3xl font-bold text-blue-600">—</div>
-          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Tổng phản hồi</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-          <div id="stat-avg" class="text-3xl font-bold text-yellow-500">—</div>
-          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Điểm trung bình</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-          <div id="stat-positive" class="text-3xl font-bold text-green-600">—</div>
-          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Tích cực (4-5★)</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-          <div id="stat-negative" class="text-3xl font-bold text-red-500">—</div>
-          <div class="text-xs text-gray-500 mt-1 uppercase tracking-wide">Tiêu cực (1-2★)</div>
-        </div>
-      </div>
-      <!-- Charts -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h2 class="text-sm font-semibold text-gray-600 mb-3">Phân bố đánh giá</h2>
-          <canvas id="chart-rating" height="160"></canvas>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h2 class="text-sm font-semibold text-gray-600 mb-3">Phản hồi theo khu vực</h2>
-          <canvas id="chart-location" height="160"></canvas>
-        </div>
-      </div>
-    </div>
+    <!-- ── DASHBOARD ── -->
+    <section id="dashboard" class="mb-8">
 
-    <!-- Filters -->
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tổng phản hồi</span>
+            <span class="text-2xl">📋</span>
+          </div>
+          <div id="kpi-total" class="text-3xl font-bold text-blue-600">—</div>
+          <div class="text-xs text-gray-400 mt-1">100 gần nhất</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Điểm TB</span>
+            <span class="text-2xl">⭐</span>
+          </div>
+          <div id="kpi-avg" class="text-3xl font-bold text-yellow-500">—</div>
+          <div class="text-xs text-gray-400 mt-1">trên thang 5</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tích cực</span>
+            <span class="text-2xl">😊</span>
+          </div>
+          <div id="kpi-positive" class="text-3xl font-bold text-green-600">—</div>
+          <div class="text-xs text-gray-400 mt-1">đánh giá 4–5 ★</div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tiêu cực</span>
+            <span class="text-2xl">😞</span>
+          </div>
+          <div id="kpi-negative" class="text-3xl font-bold text-red-500">—</div>
+          <div class="text-xs text-gray-400 mt-1">đánh giá 1–2 ★</div>
+        </div>
+
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="text-sm font-semibold text-gray-600 mb-4">Phân bố đánh giá</h2>
+          <canvas id="chart-rating"></canvas>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="text-sm font-semibold text-gray-600 mb-4">Phản hồi theo khu vực</h2>
+          <canvas id="chart-location"></canvas>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="text-sm font-semibold text-gray-600 mb-4">Xu hướng theo ngày</h2>
+          <canvas id="chart-trend"></canvas>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── FILTERS ── -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
       <div class="flex flex-wrap gap-4 items-end">
 
@@ -126,8 +156,7 @@
 
         <div class="ml-auto self-end flex items-center gap-3">
           <span id="count-label" class="text-sm text-gray-500"></span>
-          <button id="clear-filters"
-            class="hidden text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2">
+          <button id="clear-filters" class="hidden text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2">
             Xóa bộ lọc
           </button>
         </div>
@@ -143,90 +172,166 @@
       </button>
     </div>
 
-    <!-- Table container -->
+    <!-- Table -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div id="table-wrap" class="overflow-x-auto">
-        <!-- Rendered by JS -->
-      </div>
+      <div id="table-wrap" class="overflow-x-auto"></div>
     </div>
   </main>
 
   <script src="../shared/nav.js"></script>
   <script>
+    // ── Helpers ──
     function formatDate(iso) {
       const d = new Date(iso);
       const pad = n => String(n).padStart(2, '0');
-      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
+    function ratingStars(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
+    function ratingColor(n) { return n<=2?'text-red-500':n===3?'text-yellow-500':'text-green-600'; }
+    function rowBg(n)       { return n<=2?'bg-red-50':n===3?'bg-yellow-50':'bg-green-50'; }
 
-    function ratingStars(n) {
-      return '★'.repeat(n) + '☆'.repeat(5 - n);
-    }
-
-    function ratingColor(n) {
-      if (n <= 2) return 'text-red-500';
-      if (n === 3) return 'text-yellow-500';
-      return 'text-green-600';
-    }
-
-    function rowBg(n) {
-      if (n <= 2) return 'bg-red-50';
-      if (n === 3) return 'bg-yellow-50';
-      return 'bg-green-50';
-    }
-
-    function getFilters() {
-      return {
-        location: document.getElementById('f-location').value,
-        minRating: parseInt(document.getElementById('f-rating').value, 10),
-        from: document.getElementById('f-from').value,   // "YYYY-MM-DD" or ""
-        to: document.getElementById('f-to').value,
-      };
-    }
-
+    // ── State ──
     let allEntries = [];
+    let charts = {};
 
+    // ── Data loading ──
     async function loadEntries() {
       try {
         const token = await window.__getToken();
         const res = await fetch('/api/feedback', {
           headers: token ? { 'Authorization': 'Bearer ' + token } : {},
         });
-        if (res.status === 401) {
-          window.location.href = 'login.html';
-          return;
-        }
+        if (res.status === 401) { window.location.href = 'login.html'; return; }
         allEntries = await res.json();
-      } catch {
-        allEntries = [];
-      }
+      } catch { allEntries = []; }
     }
 
+    // ── Filters ──
+    function getFilters() {
+      return {
+        location:  document.getElementById('f-location').value,
+        minRating: parseInt(document.getElementById('f-rating').value, 10),
+        from:      document.getElementById('f-from').value,
+        to:        document.getElementById('f-to').value,
+      };
+    }
     function getFiltered() {
       const f = getFilters();
       return allEntries.filter(e => {
         if (f.location && e.location !== f.location) return false;
         if (e.rating < f.minRating) return false;
-        if (f.from && e.timestamp.slice(0, 10) < f.from) return false;
-        if (f.to   && e.timestamp.slice(0, 10) > f.to)   return false;
+        if (f.from && e.timestamp.slice(0,10) < f.from) return false;
+        if (f.to   && e.timestamp.slice(0,10) > f.to)   return false;
         return true;
       });
     }
 
-    function render() {
-      const all = allEntries;
-      const wrap = document.getElementById('table-wrap');
+    // ── Dashboard ──
+    function renderDashboard() {
+      const d = allEntries;
+      if (d.length === 0) return;
+
+      // KPI cards
+      const avg      = d.reduce((s,e) => s+e.rating, 0) / d.length;
+      const positive = d.filter(e => e.rating >= 4).length;
+      const negative = d.filter(e => e.rating <= 2).length;
+      document.getElementById('kpi-total').textContent    = d.length;
+      document.getElementById('kpi-avg').textContent      = avg.toFixed(1) + ' ★';
+      document.getElementById('kpi-positive').textContent = positive;
+      document.getElementById('kpi-negative').textContent = negative;
+
+      // Chart 1 — Rating distribution bar
+      const ratingCounts = [1,2,3,4,5].map(r => d.filter(e => e.rating===r).length);
+      if (charts.rating) charts.rating.destroy();
+      charts.rating = new Chart(document.getElementById('chart-rating'), {
+        type: 'bar',
+        data: {
+          labels: ['1★','2★','3★','4★','5★'],
+          datasets: [{
+            label: 'Số phản hồi',
+            data: ratingCounts,
+            backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+            borderRadius: 6,
+          }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        },
+      });
+
+      // Chart 2 — Location doughnut
+      const locations  = ['District 1','District 3','Thao Dien'];
+      const locLabels  = ['Quận 1','Quận 3','Thảo Điền'];
+      const locCounts  = locations.map(l => d.filter(e => e.location===l).length);
+      if (charts.location) charts.location.destroy();
+      charts.location = new Chart(document.getElementById('chart-location'), {
+        type: 'doughnut',
+        data: {
+          labels: locLabels,
+          datasets: [{
+            data: locCounts,
+            backgroundColor: ['#3b82f6','#8b5cf6','#f59e0b'],
+            hoverOffset: 6,
+          }],
+        },
+        options: {
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+          cutout: '60%',
+        },
+      });
+
+      // Chart 3 — Daily trend (last 14 days)
+      const today = new Date();
+      const days  = Array.from({ length: 14 }, (_, i) => {
+        const dt = new Date(today);
+        dt.setDate(today.getDate() - (13 - i));
+        return dt.toISOString().slice(0,10);
+      });
+      const dayCounts = days.map(day => d.filter(e => e.timestamp.slice(0,10) === day).length);
+      const dayLabels = days.map(day => {
+        const [, m, dd] = day.split('-');
+        return `${dd}/${m}`;
+      });
+      if (charts.trend) charts.trend.destroy();
+      charts.trend = new Chart(document.getElementById('chart-trend'), {
+        type: 'line',
+        data: {
+          labels: dayLabels,
+          datasets: [{
+            label: 'Phản hồi',
+            data: dayCounts,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.08)',
+            borderWidth: 2,
+            pointRadius: 3,
+            tension: 0.4,
+            fill: true,
+          }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+            x: { ticks: { maxRotation: 45 } },
+          },
+        },
+      });
+    }
+
+    // ── Table ──
+    function renderTable() {
+      const filtered   = getFiltered();
+      const wrap       = document.getElementById('table-wrap');
       const countLabel = document.getElementById('count-label');
 
-      if (all.length === 0) {
+      if (allEntries.length === 0) {
         countLabel.textContent = '';
         wrap.innerHTML = `<div class="px-6 py-16 text-center text-gray-400 text-sm">Chưa có phản hồi nào.</div>`;
         return;
       }
 
-      const filtered = getFiltered();
-
-      countLabel.textContent = `Hiển thị ${filtered.length} / ${all.length} phản hồi`;
+      countLabel.textContent = `Hiển thị ${filtered.length} / ${allEntries.length} phản hồi`;
 
       if (filtered.length === 0) {
         wrap.innerHTML = `<div class="px-6 py-16 text-center text-gray-400 text-sm">Không có phản hồi nào khớp với bộ lọc.</div>`;
@@ -257,119 +362,52 @@
         </table>`;
     }
 
-    function isFiltered() {
-      return document.getElementById('f-location').value !== '' ||
-             document.getElementById('f-rating').value !== '1' ||
-             document.getElementById('f-from').value !== '' ||
-             document.getElementById('f-to').value !== '';
+    function render() {
+      renderDashboard();
+      renderTable();
     }
 
+    // ── Filter events ──
+    function isFiltered() {
+      return document.getElementById('f-location').value !== '' ||
+             document.getElementById('f-rating').value  !== '1' ||
+             document.getElementById('f-from').value    !== ''  ||
+             document.getElementById('f-to').value      !== '';
+    }
     function updateClearBtn() {
       document.getElementById('clear-filters').classList.toggle('hidden', !isFiltered());
     }
 
-    ['f-location', 'f-rating', 'f-from', 'f-to'].forEach(id =>
-      document.getElementById(id).addEventListener('change', () => { render(); updateClearBtn(); }));
+    ['f-location','f-rating','f-from','f-to'].forEach(id =>
+      document.getElementById(id).addEventListener('change', () => { renderTable(); updateClearBtn(); }));
 
     document.getElementById('clear-filters').addEventListener('click', () => {
       document.getElementById('f-location').value = '';
-      document.getElementById('f-rating').value = '1';
-      document.getElementById('f-from').value = '';
-      document.getElementById('f-to').value = '';
-      render();
+      document.getElementById('f-rating').value   = '1';
+      document.getElementById('f-from').value     = '';
+      document.getElementById('f-to').value       = '';
+      renderTable();
       updateClearBtn();
     });
 
+    // ── Export CSV ──
     document.getElementById('export-csv').addEventListener('click', () => {
       const rows = getFiltered();
       if (rows.length === 0) { alert('Không có dữ liệu để xuất.'); return; }
-
-      const escape = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      const lines = [
+      const escape = v => `"${String(v??'').replace(/"/g,'""')}"`;
+      const lines  = [
         'Date,Location,Rating,Name,Comment',
-        ...rows.map(e => [
-          formatDate(e.timestamp),
-          e.location,
-          e.rating,
-          e.name || '',
-          escape(e.comment),
-        ].join(','))
+        ...rows.map(e => [formatDate(e.timestamp), e.location, e.rating, e.name||'', escape(e.comment)].join(',')),
       ];
-
-      const bom = '﻿';
-      const blob = new Blob([bom + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const today = new Date().toISOString().slice(0, 10);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `feedback-export-${today}.csv`;
+      const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = `feedback-export-${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(a.href);
     });
 
-    // --- Dashboard ---
-    let ratingChart = null;
-    let locationChart = null;
-
-    function renderDashboard(filtered) {
-      const dashboard = document.getElementById('dashboard');
-      if (filtered.length === 0) { dashboard.classList.add('hidden'); return; }
-      dashboard.classList.remove('hidden');
-
-      // Stat cards
-      const avg = filtered.reduce((s, e) => s + e.rating, 0) / filtered.length;
-      const positive = filtered.filter(e => e.rating >= 4).length;
-      const negative = filtered.filter(e => e.rating <= 2).length;
-      document.getElementById('stat-total').textContent = filtered.length;
-      document.getElementById('stat-avg').textContent = avg.toFixed(1) + ' ★';
-      document.getElementById('stat-positive').textContent = positive;
-      document.getElementById('stat-negative').textContent = negative;
-
-      // Rating distribution (1–5)
-      const ratingCounts = [1,2,3,4,5].map(r => filtered.filter(e => e.rating === r).length);
-      if (ratingChart) ratingChart.destroy();
-      ratingChart = new Chart(document.getElementById('chart-rating'), {
-        type: 'bar',
-        data: {
-          labels: ['1★','2★','3★','4★','5★'],
-          datasets: [{
-            data: ratingCounts,
-            backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
-            borderRadius: 6,
-          }],
-        },
-        options: {
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-        },
-      });
-
-      // Feedback by location
-      const locations = ['District 1','District 3','Thao Dien'];
-      const locLabels = ['Quận 1','Quận 3','Thảo Điền'];
-      const locCounts = locations.map(l => filtered.filter(e => e.location === l).length);
-      if (locationChart) locationChart.destroy();
-      locationChart = new Chart(document.getElementById('chart-location'), {
-        type: 'doughnut',
-        data: {
-          labels: locLabels,
-          datasets: [{
-            data: locCounts,
-            backgroundColor: ['#3b82f6','#8b5cf6','#f59e0b'],
-          }],
-        },
-        options: {
-          plugins: { legend: { position: 'bottom' } },
-        },
-      });
-    }
-
-    const _origRender = render;
-    render = function() {
-      _origRender();
-      renderDashboard(getFiltered());
-    };
-
+    // ── Init ──
     loadEntries().then(render);
   </script>
 </body>

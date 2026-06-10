@@ -34,7 +34,7 @@ async function requireAuth(req, res, next) {
 // GET /api/feedback — return all entries newest first (admin only)
 app.get('/api/feedback', requireAuth, async (req, res) => {
   try {
-    const snap = await db.collection(COLLECTION).orderBy('timestamp', 'desc').get();
+    const snap = await db.collection(COLLECTION).orderBy('timestamp', 'desc').limit(100).get();
     const entries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(entries);
   } catch (err) {
