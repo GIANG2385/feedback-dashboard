@@ -166,8 +166,13 @@
       </div>
     </div>
 
-    <!-- Export -->
-    <div class="flex justify-end mb-2">
+    <!-- Export / Sync -->
+    <div class="flex justify-end gap-2 mb-2">
+      <button id="sync-sheets"
+        class="bg-white border border-gray-300 hover:border-green-400 hover:text-green-600 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#34A853" d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 29l-8-8 2.83-2.83L22 27.34l13.17-13.17L38 17 22 33z"/></svg>
+        Đồng bộ Google Sheets
+      </button>
       <button id="export-csv"
         class="bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-600 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
         ↓ Xuất CSV
@@ -418,6 +423,31 @@
       a.download = `feedback-export-${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
       URL.revokeObjectURL(a.href);
+    });
+
+    // ── Sync to Google Sheets ──
+    document.getElementById('sync-sheets').addEventListener('click', async () => {
+      const btn = document.getElementById('sync-sheets');
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Đang đồng bộ…';
+      try {
+        const token = await window.__getToken();
+        const res = await fetch('/api/sync-sheets', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        btn.innerHTML = `✅ Đã đồng bộ ${data.synced} dòng`;
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#34A853" d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 29l-8-8 2.83-2.83L22 27.34l13.17-13.17L38 17 22 33z"/></svg> Đồng bộ Google Sheets';
+        }, 3000);
+      } catch (err) {
+        alert('Đồng bộ thất bại: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#34A853" d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 29l-8-8 2.83-2.83L22 27.34l13.17-13.17L38 17 22 33z"/></svg> Đồng bộ Google Sheets';
+      }
     });
 
     // ── Init — wait for Firebase Auth before fetching ──

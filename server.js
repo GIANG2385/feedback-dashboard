@@ -65,10 +65,53 @@ app.post('/api/feedback', async (req, res) => {
       timestamp: new Date().toISOString(),
     };
     const ref = await db.collection(COLLECTION).add(entry);
-    res.status(201).json({ id: ref.id, ...entry });
+    const saved = { id: ref.id, ...entry };
+
+    // Forward to Google Sheets webhook (non-blocking)
+    if (process.env.GOOGLE_SHEET_WEBHOOK) {
+      fetch(process.env.GOOGLE_SHEET_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(saved),
+      }).catch(err => console.error('Google Sheets webhook error:', err));
+    }
+
+    res.status(201).json(saved);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to save feedback' });
+  }
+});
+
+// POST /api/sync-sheets — push all existing entries to Google Sheets (admin only)
+app.post('/api/sync-sheets', requireAuth, async (req, res) => {
+  if (!process.env.GOOGLE_SHEET_WEBHOOK) {
+    return res.status(400).json({ error: 'Google Sheets webhook not configured' });
+  }
+  try {
+    const snap = await db.collection(COLLECTION).orderBy('timestamp', 'asc').get();
+    const entries = snap.docs.map(doc => {
+      const data = doc.data();
+      if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+        data.timestamp = data.timestamp.toDate().toISOString();
+      }
+      return { id: doc.id, ...data };
+    });
+
+    // Send each row sequentially to avoid Apps Script rate limits
+    let sent = 0;
+    for (const entry of entries) {
+      await fetch(process.env.GOOGLE_SHEET_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      });
+      sent++;
+    }
+    res.json({ synced: sent });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Sync failed' });
   }
 });
 
